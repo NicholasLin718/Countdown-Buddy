@@ -1,8 +1,14 @@
 {
-    "Title": "cok",
-    "Description": "nice",
+    "Title": "",
+    "Description": "",
     "Field Name": "Time Remaining: ",
-    "Field Value": "2021-06-28 15:00:00",
+    "Field Value": "",
+    "Field Name 2": "Message ID: ",
+    "Field Value 2": "0",
     "Image": "",
-    "Thumbnail": ""
+    "Thumbnail": "",
+    "Message": "",
+    "Mention": "",
+    "Author Name": "",
+    "Author Icon": ""
 }

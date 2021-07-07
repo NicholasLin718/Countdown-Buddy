@@ -1,6 +1,5 @@
 import json
 from datetime import timedelta, datetime
-
 import discord
 
 
@@ -13,17 +12,16 @@ async def send_msg(guild, countdown):
     return new_message.id
 
 
-def new_msg(endtime):
+async def new_msg(ctx, endtime):
     y = int(endtime[0:4])
-    m = int(endtime[5:7])
+    mon = int(endtime[5:7])
     d = int(endtime[8:10])
     h = int(endtime[11:13])
-    min = int(endtime[14:16])
+    m = int(endtime[14:16])
     s = int(endtime[17:19])
-
     date_now = datetime.today()
     date_now_timestamp = int(date_now.timestamp())
-    last_day_date = datetime(year=y, month=m, day=d, hour=h, minute=min, second=s)
+    last_day_date = datetime(year=y, month=mon, day=d, hour=h, minute=m, second=s)
     last_day_timestamp = int(last_day_date.timestamp())
     remaining_time_seconds = last_day_timestamp - date_now_timestamp
 
@@ -33,6 +31,9 @@ def new_msg(endtime):
 
     remaining_minutes, remaining_seconds = divmod(remaining_seconds, 60)
     remaining_hours, remaining_minutes = divmod(remaining_minutes, 60)
+    if date_now_timestamp >= last_day_timestamp:
+        message = "Timer has ended."
+        return message
 
     if remaining_days:
         if remaining_days > 1:
@@ -70,7 +71,7 @@ def new_msg(endtime):
     return message
 
 
-def set_embed(message):
+def set_temp_embed(message):
     path = 'temp-data.json'
     with open(path, 'r') as f:
         data = json.load(f)
@@ -85,41 +86,79 @@ def set_embed(message):
         url=data["Image"])
     new_embed.set_thumbnail(
         url=data["Thumbnail"])
-    new_embed.add_field(name="dababy", value=message,
+    new_embed.add_field(name="Time Remaining: ", value=message,
                         inline=True)
+    new_embed.add_field(name=data['Field Name 2'], value=data['Field Value 2'],
+                        inline=True)
+    pfp = "https://cdn.discordapp.com/avatars/" + data["Author Icon"]
+    new_embed.set_author(name=data["Author Name"],
+                         icon_url=pfp)
     return new_embed
 
+
+def set_embed(message, messageID, guildID):
+    path = 'countdown-data.json'
+
+    with open(path, 'r') as f:
+        data = json.load(f)
+
+    new_embed = discord.Embed(
+        title=data[str(guildID)][str(messageID)]["Title"],
+        description=data[str(guildID)][str(messageID)]["Description"],
+        colour=discord.Colour.random()
+    )
+    new_embed.set_footer(text='Contact Nicholas_Lin#7193 with concerns.')
+    new_embed.set_image(
+        url=data[str(guildID)][str(messageID)]["Image"])
+    new_embed.set_thumbnail(
+        url=data[str(guildID)][str(messageID)]["Thumbnail"])
+    new_embed.add_field(name="Time Remaining: ", value=message,
+                        inline=False)
+    new_embed.add_field(name=data[str(guildID)][str(messageID)]['Field Name 2'],
+                        value=data[str(guildID)][str(messageID)]['Field Value 2'],
+                        inline=False)
+    pfp = "https://cdn.discordapp.com/avatars/" + data[str(guildID)][str(messageID)]["Author Icon"]
+    new_embed.set_author(name=data[str(guildID)][str(messageID)]["Author Name"],
+                         icon_url=pfp)
+    return new_embed
+
+
 def details_embed():
-    if countdown_title == '':
+    path = 'temp-data.json'
+    with open(path, 'r') as f:
+        data = json.load(f)
+
+    if data['Title'] == '':
         title_bool = 'Title ❌'
     else:
         title_bool = 'Title ✅'
-    if countdown_description == '':
+    if data['Description'] == '':
         desc_bool = 'Description ❌'
     else:
         desc_bool = 'Description ✅'
-    if countdown_time == '':
+    if data['Field Value'] == '':
         time_bool = 'End time* ❌ <YYYY-MM-DD HH:mm:ss>'
     else:
         time_bool = 'End time* ✅'
-    if countdown_thumbnail == '':
+    if data['Thumbnail'] == '':
         thumbnail_bool = 'Thumbnail ❌'
     else:
         thumbnail_bool = 'Thumbnail ✅'
-    if countdown_image == '':
+    if data['Image'] == '':
         image_bool = 'Image ❌'
     else:
         image_bool = 'Image ✅'
-    if countdown_msg == '':
+    if data['Message'] == '':
         msg_bool = 'Countdown Message ❌'
     else:
         msg_bool = 'Countdown Message ✅'
-    if countdown_mention == '':
+    if data['Mention'] == '':
         mention_bool = 'Countdown Mention ❌'
     else:
         mention_bool = 'Countdown Mention ✅'
 
-    iterable = [title_bool, desc_bool, time_bool, thumbnail_bool, image_bool, msg_bool, mention_bool, "", "* = Mandatory Section"]
+    iterable = [title_bool, desc_bool, time_bool, thumbnail_bool, image_bool, msg_bool, mention_bool,
+                "", "* = Mandatory Section"]
     separator = '\n'
     new_embed = discord.Embed(
         title="You've added the following:",
