@@ -4,7 +4,7 @@ import countdownEmbeds
 from datetime import timedelta, datetime
 
 
-# def check_expiry(client):
+# async def check_expiry(client):
 #     path = 'countdown-data.json'
 #     with open(path, 'r') as f:
 #         data = json.load(f)
@@ -13,7 +13,10 @@ from datetime import timedelta, datetime
 #         for y in data[str(x.id)]:
 #             is_expired = check_countdown_expire(data[str(x.id)][str(y)]['Field Value'])
 #             if not is_expired:
-#                 append = {str(x.id): data[str(x.id)][str(y)]}
+#                 append = {str(x.id): {str(y): data[str(x.id)][str(y)]}}
+#                 new_data.update(append)
+#             else:
+#                 append = {str(x.id): {}}
 #                 new_data.update(append)
 #     with open(path, 'w') as f:
 #         json.dump(new_data, f, indent=4)
@@ -21,8 +24,7 @@ from datetime import timedelta, datetime
 #     print(new_data)
 
 
-
-def check_countdown_expire(endtime):
+def check_time_validity(endtime):
     y = int(endtime[0:4])
     mon = int(endtime[5:7])
     d = int(endtime[8:10])
@@ -48,7 +50,7 @@ def check_countdown_expire(endtime):
 
 
 async def update_countdown(guild, messageID):
-    # try:
+    try:
         if discord.utils.get(guild.channels, name='countdown') is None:
             cd_channel = await guild.create_text_channel('countdown')
             await cd_channel.edit(position=0, sync_permissions=True)
@@ -62,32 +64,35 @@ async def update_countdown(guild, messageID):
         time = data[str(guild.id)][str(messageID)][str("Field Value")]
         new_time = await countdownEmbeds.new_msg(cd_channel, time)
         if new_time == "Timer has ended.":
-            path = 'countdown-data.json'
-            with open(path, 'r') as f:
-                data = json.load(f)
+            channel_name = data[str(guild.id)][str(messageID)]['Channel']
+            if discord.utils.get(guild.channels, name=channel_name) is None:
+                cd_announcements_channel = await guild.create_text_channel(channel_name)
+                await cd_announcements_channel.edit(position=0, sync_permissions=True)
+            else:
+                cd_announcements_channel = discord.utils.get(guild.channels, name=channel_name)
 
             send_countdown_message = data[str(guild.id)][str(messageID)]['Message']
             send_countdown_ping = data[str(guild.id)][str(messageID)]['Mention']
+
+            end_embed = countdownEmbeds.set_embed("Timer has ended!", messageID, guild.id)
+            cd_message = await cd_channel.fetch_message(messageID)
+            await cd_message.edit(embed=end_embed)
+
             del data[str(guild.id)][str(messageID)]
 
             with open(path, 'w') as f:
                 json.dump(data, f, indent=4)
 
-            end_embed = countdownEmbeds.set_embed("Timer has ended!", messageID, guild.id)
-            cd_message = await cd_channel.fetch_message(messageID)
-            await cd_message.edit(embed=end_embed)
             if send_countdown_ping == 'here':
-                await cd_channel.send("@here")
-                await cd_channel.send(send_countdown_message)
+                await cd_announcements_channel.send("@here")
             elif send_countdown_ping == "everyone":
-                await cd_channel.send("@everyone")
-                await cd_channel.send(send_countdown_message)
+                await cd_announcements_channel.send("@everyone")
             elif send_countdown_ping.startswith("<@!"):
                 try:
-                    await cd_channel.send(send_countdown_ping)
+                    await cd_announcements_channel.send(send_countdown_ping)
                 except Exception as e:
                     print(e)
-                await cd_channel.send(send_countdown_message)
+            await cd_announcements_channel.send(send_countdown_message)
 
         elif messageID == "temp":
             new_message = countdownEmbeds.set_temp_embed(new_time)
@@ -99,7 +104,7 @@ async def update_countdown(guild, messageID):
                                         'Field Value 2': str(message.id), 'Image': tempDict['Image'],
                                         'Thumbnail': tempDict['Thumbnail'], 'Message': tempDict['Message'],
                                         'Mention': tempDict['Mention'], 'Author Name': tempDict['Title'],
-                                        'Author Icon': tempDict['Author Icon']}}
+                                        'Author Icon': tempDict['Author Icon'], 'Channel': tempDict['Channel']}}
             data[str(guild.id)].update(append)
             del data[str(guild.id)]["temp"]
             with open(path, 'w') as f:
@@ -111,14 +116,15 @@ async def update_countdown(guild, messageID):
                 await cd_message.edit(embed=new_message)
             except Exception as e:  # if bot can't edit a message, reset channel and display a new leaderboard
                 print(f"leaderboard edit error: {e}")
-                delete_message = await cd_channel.fetch_message(messageID)
-                await delete_message.delete()
+                # delete_message = await cd_channel.fetch_message(messageID)
+                # await delete_message.delete()
                 new_message = countdownEmbeds.set_embed(new_time, messageID, guild.id)
                 message = await cd_channel.send(embed=new_message)
-                data[str(message.id)] = data[str(messageID)]
-                del data[str(messageID)]
+                data[str(guild.id)][str(message.id)] = data[str(guild.id)][str(messageID)]
+                data[str(guild.id)][str(message.id)]['Field Value 2'] = str(message.id)
+                del data[str(guild.id)][str(messageID)]
                 with open(path, 'w') as f:
                     json.dump(data, f, indent=4)
-    # except Exception as e:
-    #     print(f"leaderboard error in server {guild.name}")
-    #     print(e)
+    except Exception as e:
+        print(f"leaderboard error in server {guild.name}")
+        print(e)

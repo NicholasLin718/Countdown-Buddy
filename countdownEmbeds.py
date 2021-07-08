@@ -129,35 +129,39 @@ def details_embed():
         data = json.load(f)
 
     if data['Title'] == '':
-        title_bool = 'Title ❌'
+        title_bool = '❌ Title'
     else:
-        title_bool = 'Title ✅'
+        title_bool = '✅ Title: ' + data['Title']
     if data['Description'] == '':
-        desc_bool = 'Description ❌'
+        desc_bool = '❌ Description'
     else:
-        desc_bool = 'Description ✅'
+        desc_bool = '✅ Description: ' + data['Description']
     if data['Field Value'] == '':
-        time_bool = 'End time* ❌ <YYYY-MM-DD HH:mm:ss>'
+        time_bool = '❌ *End time <YYYY-MM-DD HH:mm:ss>'
     else:
-        time_bool = 'End time* ✅'
+        time_bool = '✅ *End time: ' + data['Field Value']
     if data['Thumbnail'] == '':
-        thumbnail_bool = 'Thumbnail ❌'
+        thumbnail_bool = '❌ Thumbnail'
     else:
-        thumbnail_bool = 'Thumbnail ✅'
+        thumbnail_bool = '✅ Thumbnail: ' + data['Thumbnail']
     if data['Image'] == '':
-        image_bool = 'Image ❌'
+        image_bool = '❌ Image'
     else:
-        image_bool = 'Image ✅'
+        image_bool = '✅ Image: ' + data['Image']
     if data['Message'] == '':
-        msg_bool = 'Countdown Message ❌'
+        msg_bool = '❌ Countdown Message'
     else:
-        msg_bool = 'Countdown Message ✅'
+        msg_bool = '✅ Countdown Message: ' + data['Message']
     if data['Mention'] == '':
-        mention_bool = 'Countdown Mention ❌'
+        mention_bool = '❌ Countdown Mention'
     else:
-        mention_bool = 'Countdown Mention ✅'
+        mention_bool = '✅ Countdown Mention: ' + data['Mention']
+    if data['Channel'] == 'countdown-announcements':
+        channel_bool = '❌ Countdown Message Channel'
+    else:
+        channel_bool = '✅ Countdown Message Channel: #' + data['Channel']
 
-    iterable = [title_bool, desc_bool, time_bool, thumbnail_bool, image_bool, msg_bool, mention_bool,
+    iterable = [title_bool, desc_bool, time_bool, thumbnail_bool, image_bool, msg_bool, mention_bool, channel_bool,
                 "", "* = Mandatory Section"]
     separator = '\n'
     new_embed = discord.Embed(
@@ -167,4 +171,35 @@ def details_embed():
     )
     new_embed.set_footer(text='Contact Nicholas_Lin#7193 with concerns.')
     return new_embed
+
+
+def help_embed():
+    iterable = ["Countdown Buddy is a customizable countdown bot, read below to learn how to use it!",
+                " ",
+                "**Countdown Commands** ⏰",
+                "**$new** - Creates a new countdown.",
+                "**$countdown** - Starts the countdown.",
+                "**$end <Countdown ID>** - Ends the specific countdown.",
+                " ",
+                "**Customizing Your Countdown** ⏰",
+                "**set title <Insert Title>** - Set your title.",
+                "**set description <Insert Description>** - Set your description.",
+                "**set time <YYYY-MM-DD HH:mm:ss>** - Set your time (24-hour clock).",
+                "**set thumbnail <Insert Thumbnail URL>** - Set your thumbnail.",
+                "**set image <Insert Image URL>** - Set your image.",
+                "**set message <Insert Message>** - Set the message for when countdown ends.",
+                "**set mention <everyone/here/me>** - Set the mention for when countdown ends.",
+                "**set channel <Channel name>** - Set the channel where the message is sent."
+]
+
+    separator = '\n'
+    helpEmbed = discord.Embed(
+        title="Countdown Buddy",
+        description=separator.join(iterable),
+        colour=discord.Colour.gold()
+    )
+    helpEmbed.set_thumbnail(url="https://media.discordapp.net/attachments/459383149068288032/851565274892861520/ctdico.png")
+    helpEmbed.set_footer(text='Contact Nicholas_Lin#7193 with concerns.')
+    return helpEmbed
+
 

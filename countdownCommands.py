@@ -1,11 +1,11 @@
-import asyncio
 import json
 import discord
 from discord.ext import commands, tasks
-from datetime import timedelta, datetime
 import countdownEmbeds
 import updateFiles
 import countdowns
+from discord.ext.commands import CommandNotFound
+
 
 client = commands.Bot(command_prefix="$", help_command=None)
 f = open("token.txt", "r")
@@ -25,7 +25,7 @@ countdown_msg = ''
 countdown_mention = ''
 countdown_author_name = ''
 countdown_author_icon = ''
-
+countdown_announcement_channel = 'countdown-announcements'
 
 # def get_countdowns():
 
@@ -49,6 +49,8 @@ def set_embed_values():
     countdown_author_name = ''
     global countdown_author_icon
     countdown_author_icon = ''
+    global countdown_announcement_channel
+    countdown_announcement_channel = 'countdown-announcements'
 
 
 def add_server(guildID):
@@ -67,7 +69,7 @@ def add_server(guildID):
 @client.event
 async def on_ready():
     print('We have logged in as {0.user}'.format(client))
-    # countdowns.check_expiry(client)
+    # await countdowns.check_expiry(client)
     update.start()
 
 
@@ -85,21 +87,24 @@ async def update():
     for x in client.guilds:
         for y in data[str(x.id)]:
             await countdowns.update_countdown(x, y)
-    # new_message = countdownEmbeds.new_msg(endtime="2021-06-28 15:00:00")
-    # await embeds.update_msg(new_message, msg)
 
 
 @client.command()
 async def countdown(ctx):
     if countdown_time == '':
-        await ctx.send("Dude give me a time wth")
-    try:
-        message = await countdownEmbeds.new_msg(ctx, countdown_time)
-        updateFiles.write_file(ctx.guild.id)
-    except ValueError as e:
-        print(e)
-        await ctx.send("Please check your time values, something went wrong!")
-        return
+        await ctx.send("Please enter a time!")
+    else:
+        try:
+            not_valid_time = countdowns.check_time_validity(countdown_time)
+            if not_valid_time:
+                await ctx.send("Please check your time, you may be entering a time that has already passed!")
+            else:
+                message = await countdownEmbeds.new_msg(ctx, countdown_time)
+                updateFiles.write_file(ctx.guild.id)
+        except ValueError as e:
+            print(e)
+            await ctx.send("Please check your values, something went wrong!")
+            return
 
 
 @client.command()
@@ -108,13 +113,36 @@ async def new(ctx):
     await ctx.send("Create new countdown!")
     updateFiles.write_temp(countdown_title, countdown_description, countdown_time, countdown_image,
                            countdown_thumbnail, countdown_msg, countdown_mention,
-                           countdown_author_name, countdown_author_icon)
+                           countdown_author_name, countdown_author_icon, countdown_announcement_channel)
+
+
+@client.command()
+async def stop(ctx, messageID):
+    guildID = ctx.guild.id
+    path = 'countdown-data.json'
+    with open(path, 'r') as f:
+        data = json.load(f)
+    cd_channel = discord.utils.get(ctx.guild.channels, name='countdown')
+    message_to_delete = await cd_channel.fetch_message(messageID)
+    await message_to_delete.delete()
+    del data[str(guildID)][str(messageID)]
+    with open(path, 'w') as f:
+        json.dump(data, f, indent=4)
+    await ctx.send("Stopped Timer!")
+
+
+@client.command()
+async def help(ctx):
+    helpEmbed = countdownEmbeds.help_embed()
+    await ctx.send(embed=helpEmbed)
+
 
 @client.event
 async def on_message(command):
     await client.process_commands(command)
     global countdown_title, countdown_description, countdown_time, countdown_image, \
-        countdown_thumbnail, countdown_msg, countdown_mention, countdown_author_name, countdown_author_icon
+        countdown_thumbnail, countdown_msg, countdown_mention, countdown_author_name, \
+        countdown_author_icon, countdown_announcement_channel
     cmd = command.content.lower()
     message_set = False
     message_edit = False
@@ -125,7 +153,6 @@ async def on_message(command):
 
         list_of_words = cmd.split(" ")
         joined_values = " ".join(list_of_words[3:])
-        print(joined_values)
         countdown_id = list_of_words[1]
         part_to_change = list_of_words[2]
         guildid = command.guild.id
@@ -195,6 +222,9 @@ async def on_message(command):
     elif cmd.startswith("set message "):
         countdown_msg = command.content[12:]
         message_set = True
+    elif cmd.startswith("set channel "):
+        countdown_announcement_channel = command.content[12:]
+        message_set = True
     elif cmd.startswith("set mention "):
         if command.content[12:].lower() == "me":
             author = "Countdown Buddy will ping " + f"{command.author.mention} when countdown ends!"
@@ -202,8 +232,6 @@ async def on_message(command):
             countdown_mention = command.author.mention
             countdown_author_name = command.author.name
             countdown_author_icon = str(command.author.avatar_url)[35:]
-            # print(countdown_author_name)
-            # print(countdown_author_icon)
             message_set = True
         elif command.content[12:].lower() == "here":
             await command.channel.send("Countdown Buddy will ping ``@here`` when countdown ends!")
@@ -223,12 +251,18 @@ async def on_message(command):
             countdown_mention = command.content[12:]
             message_set = True
 
-    if message_set:
+    if message_set or message_edit:
         updateFiles.write_temp(countdown_title, countdown_description, countdown_time, countdown_image,
                                countdown_thumbnail, countdown_msg, countdown_mention,
-                               countdown_author_name, countdown_author_icon)
+                               countdown_author_name, countdown_author_icon, countdown_announcement_channel)
         new_embed = countdownEmbeds.details_embed()
         await command.channel.send(embed=new_embed)
 
+
+@client.event
+async def on_command_error(ctx, error):
+    if isinstance(error, CommandNotFound):
+        return
+    raise error
 
 client.run(TOKEN)
