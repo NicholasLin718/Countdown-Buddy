@@ -72,7 +72,7 @@ async def new_msg(ctx, endtime):
 
 
 def set_temp_embed(message):
-    path = '../temp-data.json'
+    path = 'temp-data.json'
     with open(path, 'r') as f:
         data = json.load(f)
 
@@ -97,7 +97,7 @@ def set_temp_embed(message):
 
 
 def set_embed(message, messageID, guildID):
-    path = '../countdown-data.json'
+    path = 'countdown-data.json'
 
     with open(path, 'r') as f:
         data = json.load(f)
@@ -124,7 +124,7 @@ def set_embed(message, messageID, guildID):
 
 
 def details_embed():
-    path = '../temp-data.json'
+    path = 'temp-data.json'
     with open(path, 'r') as f:
         data = json.load(f)
 
@@ -174,7 +174,7 @@ def details_embed():
 
 
 def edit_details_embed(guildID, messageID):
-    path = '../countdown-data.json'
+    path = 'countdown-data.json'
     with open(path, 'r') as f:
         data = json.load(f)
     data_values = data[str(guildID)][str(messageID)]

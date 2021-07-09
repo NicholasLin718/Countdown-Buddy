@@ -46,7 +46,7 @@ def set_embed_values():
 
 def add_server(guildID):
     # open orig file as dict
-    path = 'countdown-data.json'
+    path = 'util/countdown-data.json'
     with open(path, 'r') as f:
         data = json.load(f)
     # append new server data to dict
@@ -74,7 +74,7 @@ async def on_guild_join(guild):
 @tasks.loop(seconds=1)
 async def update():
     # load json file to a dict
-    path = 'countdown-data.json'
+    path = 'util/countdown-data.json'
     with open(path, 'r') as f:
         data = json.load(f)
     # for each messageID in each guildID, update the countdown
@@ -118,7 +118,7 @@ async def new(ctx):
 async def stop(ctx, messageID): # stop using the command and the messageID
     guildID = ctx.guild.id
     # turn json file to dict
-    path = 'countdown-data.json'
+    path = 'util/countdown-data.json'
     with open(path, 'r') as f:
         data = json.load(f)
     # get the channel to delete the specific message
@@ -154,7 +154,7 @@ async def on_message(command):
     countdown_id = ''
     #if message is an edit
     if cmd.startswith("edit"):
-        path = 'countdown-data.json'
+        path = 'util/countdown-data.json'
         with open(path, 'r') as f:
             data = json.load(f)
         # break down the message into the word edit, messageID, the specific part of the embed to change, and the value

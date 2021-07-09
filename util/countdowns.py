@@ -1,29 +1,9 @@
 import json
 import discord
 from util import countdownEmbeds
-from datetime import timedelta, datetime
+from datetime import datetime
 
-
-# async def check_expiry(client):
-#     path = 'countdown-data.json'
-#     with open(path, 'r') as f:
-#         data = json.load(f)
-#     new_data = {}
-#     for x in client.guilds:
-#         for y in data[str(x.id)]:
-#             is_expired = check_countdown_expire(data[str(x.id)][str(y)]['Field Value'])
-#             if not is_expired:
-#                 append = {str(x.id): {str(y): data[str(x.id)][str(y)]}}
-#                 new_data.update(append)
-#             else:
-#                 append = {str(x.id): {}}
-#                 new_data.update(append)
-#     with open(path, 'w') as f:
-#         json.dump(new_data, f, indent=4)
-#
-#     print(new_data)
-
-
+# compare the time the user entered and the current time to see if countdown is possible
 def check_time_validity(endtime):
     y = int(endtime[0:4])
     mon = int(endtime[5:7])
@@ -35,29 +15,22 @@ def check_time_validity(endtime):
     date_now_timestamp = int(date_now.timestamp())
     last_day_date = datetime(year=y, month=mon, day=d, hour=h, minute=m, second=s)
     last_day_timestamp = int(last_day_date.timestamp())
-    remaining_time_seconds = last_day_timestamp - date_now_timestamp
-
-    remaining_time = timedelta(seconds=remaining_time_seconds)
-    remaining_days = remaining_time.days
-    remaining_seconds = remaining_time.seconds
-
-    remaining_minutes, remaining_seconds = divmod(remaining_seconds, 60)
-    remaining_hours, remaining_minutes = divmod(remaining_minutes, 60)
     if date_now_timestamp >= last_day_timestamp:
         return True
     else:
         return False
 
-
+# method to update countdown
 async def update_countdown(guild, messageID):
     try:
+        # see if a countdown channel exists
         if discord.utils.get(guild.channels, name='countdown') is None:
             cd_channel = await guild.create_text_channel('countdown')
             await cd_channel.edit(position=0, sync_permissions=True)
         else:
             cd_channel = discord.utils.get(guild.channels, name='countdown')
 
-        path = '../countdown-data.json'
+        path = 'countdown-data.json'
         with open(path, 'r') as f:
             data = json.load(f)
 

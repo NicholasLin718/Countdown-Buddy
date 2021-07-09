@@ -1,4 +1,4 @@
 token.txt
 .idea
-temp-data.json
-countdown-data.json
+util/temp-data.json
+util/countdown-data.json
