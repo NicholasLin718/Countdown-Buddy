@@ -9,11 +9,6 @@ client = commands.Bot(command_prefix="$", help_command=None)
 f = open("token.txt", "r")
 TOKEN = f.read()
 
-# Things to do:
-# Create timer for each individual countdown
-# Have a method that calls each one and runs it
-# Access each countdown in tasks.loop
-
 countdown_title = ''
 countdown_description = ''
 countdown_time = ''
@@ -24,8 +19,6 @@ countdown_mention = ''
 countdown_author_name = ''
 countdown_author_icon = ''
 countdown_announcement_channel = 'countdown-announcements'
-
-# def get_countdowns():
 
 
 def set_embed_values():
@@ -66,22 +59,25 @@ def add_server(guildID):
 
 @client.event
 async def on_ready():
+    # inform when bot code is running
     print('We have logged in as {0.user}'.format(client))
-    # await countdowns.check_expiry(client)
+    # start the task.loop
     update.start()
 
 
 @client.event
 async def on_guild_join(guild):
+    # call method to add a new server to countdown-data.json
     add_server(str(guild.id))
 
 
 @tasks.loop(seconds=1)
 async def update():
+    # load json file to a dict
     path = 'countdown-data.json'
     with open(path, 'r') as f:
         data = json.load(f)
-
+    # for each messageID in each guildID, update the countdown
     for x in client.guilds:
         for y in data[str(x.id)]:
             await countdowns.update_countdown(x, y)
@@ -89,17 +85,20 @@ async def update():
 
 @client.command()
 async def countdown(ctx):
+    # checks to see if time is empty
     if countdown_time == '':
         await ctx.send("Please enter a time!")
+    # if not empty
     else:
         try:
+            # check to see if time has already passed
             not_valid_time = countdowns.check_time_validity(countdown_time)
             if not_valid_time:
                 await ctx.send("Please check your time, you may be entering a time that has already passed!")
             else:
-                message = await countdownEmbeds.new_msg(ctx, countdown_time)
+                # add countdown to json file so task.loop can update it
                 updateFiles.write_file(ctx.guild.id)
-        except ValueError as e:
+        except ValueError as e: # catch any other errors
             print(e)
             await ctx.send("Please check your values, something went wrong!")
             return
@@ -107,6 +106,7 @@ async def countdown(ctx):
 
 @client.command()
 async def new(ctx):
+    # resets all the values
     set_embed_values()
     await ctx.send("Create new countdown!")
     updateFiles.write_temp(countdown_title, countdown_description, countdown_time, countdown_image,
@@ -115,15 +115,18 @@ async def new(ctx):
 
 
 @client.command()
-async def stop(ctx, messageID):
+async def stop(ctx, messageID): # stop using the command and the messageID
     guildID = ctx.guild.id
+    # turn json file to dict
     path = 'countdown-data.json'
     with open(path, 'r') as f:
         data = json.load(f)
+    # get the channel to delete the specific message
     cd_channel = discord.utils.get(ctx.guild.channels, name='countdown')
     message_to_delete = await cd_channel.fetch_message(messageID)
     await message_to_delete.delete()
     del data[str(guildID)][str(messageID)]
+    # update json file
     with open(path, 'w') as f:
         json.dump(data, f, indent=4)
     await ctx.send("Stopped Timer!")
@@ -131,13 +134,16 @@ async def stop(ctx, messageID):
 
 @client.command()
 async def help(ctx):
+    # call the method to send help embed
     helpEmbed = countdownEmbeds.help_embed()
     await ctx.send(embed=helpEmbed)
 
 
 @client.event
 async def on_message(command):
+    # makes sure its not a command
     await client.process_commands(command)
+    # global variables
     global countdown_title, countdown_description, countdown_time, countdown_image, \
         countdown_thumbnail, countdown_msg, countdown_mention, countdown_author_name, \
         countdown_author_icon, countdown_announcement_channel
@@ -146,17 +152,20 @@ async def on_message(command):
     message_edit = False
     guildid = command.guild.id
     countdown_id = ''
+    #if message is an edit
     if cmd.startswith("edit"):
         path = 'countdown-data.json'
         with open(path, 'r') as f:
             data = json.load(f)
-
+        # break down the message into the word edit, messageID, the specific part of the embed to change, and the value
         list_of_words = cmd.split(" ")
         joined_values = " ".join(list_of_words[3:])
         countdown_id = list_of_words[1]
         part_to_change = list_of_words[2]
         for countdown_messages in data[str(guildid)]:
+            # if countdown_id exists in the json file
             if countdown_id == countdown_messages:
+                # directly update the file instead of storing and updating later
                 if part_to_change == "title":
                     data[str(guildid)][str(countdown_id)]['Title'] = joined_values
                     message_edit = True
@@ -191,6 +200,7 @@ async def on_message(command):
                         await command.channel.send("Countdown Buddy will ping ``@everyone`` when countdown ends!")
                         data[str(guildid)][str(countdown_id)]['Mention'] = joined_values
                         message_edit = True
+                    # for specific person, kinda not ideal way but it will do
                     elif joined_values.startswith("<@!") and joined_values.endswith(">"):
                         userid = joined_values
                         userid = userid.replace("<", "")
@@ -202,7 +212,7 @@ async def on_message(command):
                         message_edit = True
         with open(path, 'w') as f:
             json.dump(data, f, indent=4)
-
+    # if setting initial values
     elif cmd.startswith("set title "):
         countdown_title = command.content[10:]
         message_set = True
@@ -249,18 +259,19 @@ async def on_message(command):
             await command.channel.send(user)
             countdown_mention = command.content[12:]
             message_set = True
-
+    # run if its a set countdown
     if message_set:
         updateFiles.write_temp(countdown_title, countdown_description, countdown_time, countdown_image,
                                countdown_thumbnail, countdown_msg, countdown_mention,
                                countdown_author_name, countdown_author_icon, countdown_announcement_channel)
         new_embed = countdownEmbeds.details_embed()
         await command.channel.send(embed=new_embed)
+    # run if its a message edit
     elif message_edit:
         new_embed = countdownEmbeds.edit_details_embed(guildid, countdown_id)
         await command.channel.send(embed=new_embed)
 
-
+# any other errors
 @client.event
 async def on_command_error(ctx, error):
     if isinstance(error, CommandNotFound):
