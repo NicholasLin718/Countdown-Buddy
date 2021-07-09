@@ -10,7 +10,7 @@ def write_file(guildID):
     with open(path, 'r') as f:
         data = json.load(f)
         temp = data[str(guildID)]
-        # append new server data to dict
+        # transport all the values from temp-data to countdown-data under the key "temp"
         append = {"temp": {'Title': temp_file_data['Title'], 'Description': temp_file_data['Description'],
                            'Field Name': 'Time Remaining: ', 'Field Value': temp_file_data['Field Value'],
                            'Field Name 2': temp_file_data['Field Name 2'],
@@ -38,7 +38,7 @@ def write_temp(countdown_title, countdown_description, countdown_time, countdown
     path = 'temp-data.json'
     with open(path, 'r') as f:
         data = json.load(f)
-    # append new server data to dict
+    # append values to the temp-data file, where all the values the user is entering before the countdown starts is stored
     append = {'Title': countdown_title, 'Description': countdown_description, 'Field Name': 'Time Remaining: ',
               'Field Value': countdown_time, 'Field Name 2': 'Message ID: ', 'Field Value 2': '0',
               'Image': countdown_image, 'Thumbnail': countdown_thumbnail,

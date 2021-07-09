@@ -33,9 +33,10 @@ async def update_countdown(guild, messageID):
         path = 'countdown-data.json'
         with open(path, 'r') as f:
             data = json.load(f)
-
+        # get the end time of that countdown
         time = data[str(guild.id)][str(messageID)][str("Field Value")]
         new_time = await countdownEmbeds.new_msg(cd_channel, time)
+        # if the endtime has already passed and new_time stored a return value of "Timer has ended."
         if new_time == "Timer has ended.":
             channel_name = data[str(guild.id)][str(messageID)]['Channel']
             if discord.utils.get(guild.channels, name=channel_name) is None:
@@ -46,7 +47,7 @@ async def update_countdown(guild, messageID):
 
             send_countdown_message = data[str(guild.id)][str(messageID)]['Message']
             send_countdown_ping = data[str(guild.id)][str(messageID)]['Mention']
-
+            # edit the message to say the timer has ended
             end_embed = countdownEmbeds.set_embed("Timer has ended!", messageID, guild.id)
             cd_message = await cd_channel.fetch_message(messageID)
             await cd_message.edit(embed=end_embed)
@@ -55,7 +56,7 @@ async def update_countdown(guild, messageID):
 
             with open(path, 'w') as f:
                 json.dump(data, f, indent=4)
-
+            # ping the mention the user chose, or no ping at all
             if send_countdown_ping == 'here':
                 await cd_announcements_channel.send("@here")
             elif send_countdown_ping == "everyone":
@@ -66,7 +67,7 @@ async def update_countdown(guild, messageID):
                 except Exception as e:
                     print(e)
             await cd_announcements_channel.send(send_countdown_message)
-
+        # replace the new countdown using messageID as the new key
         elif messageID == "temp":
             new_message = countdownEmbeds.set_temp_embed(new_time)
             message = await cd_channel.send(embed=new_message)
@@ -82,12 +83,13 @@ async def update_countdown(guild, messageID):
             del data[str(guild.id)]["temp"]
             with open(path, 'w') as f:
                 json.dump(data, f, indent=4)
+        # any other situation - edits the message with a new time
         else:
             try:
                 cd_message = await cd_channel.fetch_message(messageID)
                 new_message = countdownEmbeds.set_embed(new_time, messageID, guild.id)
                 await cd_message.edit(embed=new_message)
-            except Exception as e:  # if bot can't edit a message, reset channel and display a new leaderboard
+            except Exception as e:  # if bot can't edit a message, delete message and send a new one
                 print(f"leaderboard edit error: {e}")
                 try:
                     delete_message = await cd_channel.fetch_message(messageID)
@@ -102,6 +104,7 @@ async def update_countdown(guild, messageID):
                 del data[str(guild.id)][str(messageID)]
                 with open(path, 'w') as f:
                     json.dump(data, f, indent=4)
+
     except Exception as e:
         print(f"leaderboard error in server {guild.name}")
         print(e)
