@@ -1,9 +1,7 @@
 import json
 import discord
 from discord.ext import commands, tasks
-import countdownEmbeds
-import updateFiles
-import countdowns
+from util import countdownEmbeds, countdowns, updateFiles
 from discord.ext.commands import CommandNotFound
 
 
@@ -146,6 +144,8 @@ async def on_message(command):
     cmd = command.content.lower()
     message_set = False
     message_edit = False
+    guildid = command.guild.id
+    countdown_id = ''
     if cmd.startswith("edit"):
         path = 'countdown-data.json'
         with open(path, 'r') as f:
@@ -155,7 +155,6 @@ async def on_message(command):
         joined_values = " ".join(list_of_words[3:])
         countdown_id = list_of_words[1]
         part_to_change = list_of_words[2]
-        guildid = command.guild.id
         for countdown_messages in data[str(guildid)]:
             if countdown_id == countdown_messages:
                 if part_to_change == "title":
@@ -251,11 +250,14 @@ async def on_message(command):
             countdown_mention = command.content[12:]
             message_set = True
 
-    if message_set or message_edit:
+    if message_set:
         updateFiles.write_temp(countdown_title, countdown_description, countdown_time, countdown_image,
                                countdown_thumbnail, countdown_msg, countdown_mention,
                                countdown_author_name, countdown_author_icon, countdown_announcement_channel)
         new_embed = countdownEmbeds.details_embed()
+        await command.channel.send(embed=new_embed)
+    elif message_edit:
+        new_embed = countdownEmbeds.edit_details_embed(guildid, countdown_id)
         await command.channel.send(embed=new_embed)
 
 

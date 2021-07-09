@@ -72,7 +72,7 @@ async def new_msg(ctx, endtime):
 
 
 def set_temp_embed(message):
-    path = 'temp-data.json'
+    path = '../temp-data.json'
     with open(path, 'r') as f:
         data = json.load(f)
 
@@ -97,7 +97,7 @@ def set_temp_embed(message):
 
 
 def set_embed(message, messageID, guildID):
-    path = 'countdown-data.json'
+    path = '../countdown-data.json'
 
     with open(path, 'r') as f:
         data = json.load(f)
@@ -124,7 +124,7 @@ def set_embed(message, messageID, guildID):
 
 
 def details_embed():
-    path = 'temp-data.json'
+    path = '../temp-data.json'
     with open(path, 'r') as f:
         data = json.load(f)
 
@@ -173,13 +173,64 @@ def details_embed():
     return new_embed
 
 
+def edit_details_embed(guildID, messageID):
+    path = '../countdown-data.json'
+    with open(path, 'r') as f:
+        data = json.load(f)
+    data_values = data[str(guildID)][str(messageID)]
+    if data_values['Title'] == '':
+        title_bool = '❌ Title'
+    else:
+        title_bool = '✅ Title: ' + data_values['Title']
+    if data_values['Description'] == '':
+        desc_bool = '❌ Description'
+    else:
+        desc_bool = '✅ Description: ' + data_values['Description']
+    if data_values['Field Value'] == '':
+        time_bool = '❌ *End time <YYYY-MM-DD HH:mm:ss>'
+    else:
+        time_bool = '✅ *End time: ' + data_values['Field Value']
+    if data_values['Thumbnail'] == '':
+        thumbnail_bool = '❌ Thumbnail'
+    else:
+        thumbnail_bool = '✅ Thumbnail: ' + data_values['Thumbnail']
+    if data_values['Image'] == '':
+        image_bool = '❌ Image'
+    else:
+        image_bool = '✅ Image: ' + data_values['Image']
+    if data_values['Message'] == '':
+        msg_bool = '❌ Countdown Message'
+    else:
+        msg_bool = '✅ Countdown Message: ' + data_values['Message']
+    if data_values['Mention'] == '':
+        mention_bool = '❌ Countdown Mention'
+    else:
+        mention_bool = '✅ Countdown Mention: ' + data_values['Mention']
+    if data_values['Channel'] == 'countdown-announcements':
+        channel_bool = '❌ Countdown Message Channel'
+    else:
+        channel_bool = '✅ Countdown Message Channel: #' + data_values['Channel']
+
+    iterable = [title_bool, desc_bool, time_bool, thumbnail_bool, image_bool, msg_bool, mention_bool, channel_bool,
+                "", "* = Mandatory Section"]
+    separator = '\n'
+    new_embed = discord.Embed(
+        title="You've edited the following:",
+        description=separator.join(iterable),
+        colour=discord.Colour.dark_blue()
+    )
+    new_embed.set_footer(text='Contact Nicholas_Lin#7193 with concerns.')
+    return new_embed
+
+
+
 def help_embed():
     iterable = ["Countdown Buddy is a customizable countdown bot, read below to learn how to use it!",
                 " ",
                 "**Countdown Commands** ⏰",
                 "**$new** - Creates a new countdown.",
                 "**$countdown** - Starts the countdown.",
-                "**$end <Countdown ID>** - Ends the specific countdown.",
+                "**$stop <Countdown ID>** - Stops the specific countdown.",
                 " ",
                 "**Customizing Your Countdown** ⏰",
                 "**set title <Insert Title>** - Set your title.",
@@ -189,7 +240,11 @@ def help_embed():
                 "**set image <Insert Image URL>** - Set your image.",
                 "**set message <Insert Message>** - Set the message for when countdown ends.",
                 "**set mention <everyone/here/me>** - Set the mention for when countdown ends.",
-                "**set channel <Channel name>** - Set the channel where the message is sent."
+                "**set channel <Channel name>** - Set the channel where the message is sent.",
+                " ",
+                "**Editing Your Countdown** ⏰",
+                "Editing a value on your countdown is in the same format as customizing it, except you replace 'set' with edit and the messageID of the countdown you want to edit. Here's an example:",
+                "**edit <messageID> title <insert Title>** - Edits the title.",
 ]
 
     separator = '\n'

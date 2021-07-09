@@ -1,6 +1,6 @@
 import json
 import discord
-import countdownEmbeds
+from util import countdownEmbeds
 from datetime import timedelta, datetime
 
 
@@ -57,7 +57,7 @@ async def update_countdown(guild, messageID):
         else:
             cd_channel = discord.utils.get(guild.channels, name='countdown')
 
-        path = 'countdown-data.json'
+        path = '../countdown-data.json'
         with open(path, 'r') as f:
             data = json.load(f)
 
@@ -116,8 +116,12 @@ async def update_countdown(guild, messageID):
                 await cd_message.edit(embed=new_message)
             except Exception as e:  # if bot can't edit a message, reset channel and display a new leaderboard
                 print(f"leaderboard edit error: {e}")
-                # delete_message = await cd_channel.fetch_message(messageID)
-                # await delete_message.delete()
+                try:
+                    delete_message = await cd_channel.fetch_message(messageID)
+                    await delete_message.delete()
+                except Exception as e:
+                    print("Someone deleted the countdown!")
+
                 new_message = countdownEmbeds.set_embed(new_time, messageID, guild.id)
                 message = await cd_channel.send(embed=new_message)
                 data[str(guild.id)][str(message.id)] = data[str(guild.id)][str(messageID)]

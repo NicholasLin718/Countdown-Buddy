@@ -2,11 +2,11 @@ import json
 
 
 def write_file(guildID):
-    temp_path = 'temp-data.json'
+    temp_path = '../temp-data.json'
     with open(temp_path, 'r') as f:
         temp_file_data = json.load(f)
 
-    path = 'countdown-data.json'
+    path = '../countdown-data.json'
     with open(path, 'r') as f:
         data = json.load(f)
         temp = data[str(guildID)]
@@ -35,7 +35,7 @@ def write_file(guildID):
 
 
 def write_temp(countdown_title, countdown_description, countdown_time, countdown_image, countdown_thumbnail, countdown_msg, countdown_mention, countdown_author_name, countdown_author_icon, countdown_announcement_channel):
-    path = 'temp-data.json'
+    path = '../temp-data.json'
     with open(path, 'r') as f:
         data = json.load(f)
     # append new server data to dict
