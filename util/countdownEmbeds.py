@@ -3,15 +3,6 @@ from datetime import timedelta, datetime
 import discord
 
 
-async def update_msg(new_message, msg):
-    await msg.edit(content=new_message)
-
-
-async def send_msg(guild, countdown):
-    new_message = await guild.send(content=countdown)
-    return new_message.id
-
-
 async def new_msg(ctx, endtime):
     y = int(endtime[0:4])
     mon = int(endtime[5:7])
@@ -31,10 +22,12 @@ async def new_msg(ctx, endtime):
 
     remaining_minutes, remaining_seconds = divmod(remaining_seconds, 60)
     remaining_hours, remaining_minutes = divmod(remaining_minutes, 60)
+    # check if endtime has been reached/exceeded
     if date_now_timestamp >= last_day_timestamp:
         message = "Timer has ended."
         return message
 
+    # formatting the timer to days, hours, minutes, seconds
     if remaining_days:
         if remaining_days > 1:
             remaining_days = '{} days '.format(remaining_days)
@@ -72,6 +65,7 @@ async def new_msg(ctx, endtime):
 
 
 def set_temp_embed(message):
+    # The initial countdown message that is sent
     path = 'temp-data.json'
     with open(path, 'r') as f:
         data = json.load(f)
@@ -97,6 +91,7 @@ def set_temp_embed(message):
 
 
 def set_embed(message, messageID, guildID):
+    # Sets the defaulted embed after messageID exists
     path = 'countdown-data.json'
 
     with open(path, 'r') as f:
@@ -124,6 +119,7 @@ def set_embed(message, messageID, guildID):
 
 
 def details_embed():
+    # Tells users what they have entered so far
     path = 'temp-data.json'
     with open(path, 'r') as f:
         data = json.load(f)
@@ -160,7 +156,7 @@ def details_embed():
         channel_bool = '❌ Countdown Message Channel'
     else:
         channel_bool = '✅ Countdown Message Channel: #' + data['Channel']
-
+    # Makes the message be sent line by line
     iterable = [title_bool, desc_bool, time_bool, thumbnail_bool, image_bool, msg_bool, mention_bool, channel_bool,
                 "", "* = Mandatory Section"]
     separator = '\n'
@@ -174,6 +170,7 @@ def details_embed():
 
 
 def edit_details_embed(guildID, messageID):
+    # Nearly same as details_embed except it displays edited instead
     path = 'countdown-data.json'
     with open(path, 'r') as f:
         data = json.load(f)
@@ -225,6 +222,7 @@ def edit_details_embed(guildID, messageID):
 
 
 def help_embed():
+    # Help embed, uses the iterable array to be broken up into paragraphs
     iterable = ["Countdown Buddy is a customizable countdown bot, read below to learn how to use it!",
                 " ",
                 "**Countdown Commands** ⏰",
