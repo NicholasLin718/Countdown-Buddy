@@ -2,7 +2,7 @@
 #  <center>⏰Countdown Buddy⏰</center>
 
 
-### [Invite me!](https://discord.com/api/oauth2/authorize?client_id=850165825439531039&permissions=0&scope=bot)
+### [Invite me!](https://discord.com/oauth2/authorize?client_id=850165825439531039&permissions=8&scope=bot)
 **Note: This bot is still in development. Use at your own risk 😹**
 
 ## About
