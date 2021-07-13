@@ -4,7 +4,6 @@ from discord.ext import commands, tasks
 from util import countdownEmbeds, countdowns, updateFiles
 from discord.ext.commands import CommandNotFound
 
-
 client = commands.Bot(command_prefix="$", help_command=None)
 f = open("token.txt", "r")
 TOKEN = f.read()
@@ -83,6 +82,18 @@ async def update():
             await countdowns.update_countdown(x, y)
 
 
+@tasks.loop(seconds=86400)
+async def reset_channel():
+    for x in client.guilds:
+        existing_channel = discord.utils.get(x.channels, name='countdown')
+        if existing_channel is not None:
+            try:
+                await existing_channel.purge(limit=20)
+                # clears the channel to remove messages
+            except Exception as e:
+                print("Error in purging messages")
+
+
 @client.command()
 async def countdown(ctx):
     # checks to see if time is empty
@@ -98,7 +109,7 @@ async def countdown(ctx):
             else:
                 # add countdown to json file so task.loop can update it
                 updateFiles.write_file(ctx.guild.id)
-        except ValueError as e: # catch any other errors
+        except ValueError as e:  # catch any other errors
             print(e)
             await ctx.send("Please check your values, something went wrong!")
             return
@@ -115,7 +126,7 @@ async def new(ctx):
 
 
 @client.command()
-async def stop(ctx, messageID): # stop using the command and the messageID
+async def stop(ctx, messageID):  # stop using the command and the messageID
     guildID = ctx.guild.id
     # turn json file to dict
     path = 'util/countdown-data.json'
@@ -152,7 +163,7 @@ async def on_message(command):
     message_edit = False
     guildid = command.guild.id
     countdown_id = ''
-    #if message is an edit
+    # if message is an edit
     if cmd.startswith("edit"):
         path = 'util/countdown-data.json'
         with open(path, 'r') as f:
@@ -271,11 +282,13 @@ async def on_message(command):
         new_embed = countdownEmbeds.edit_details_embed(guildid, countdown_id)
         await command.channel.send(embed=new_embed)
 
+
 # any other errors
 @client.event
 async def on_command_error(ctx, error):
     if isinstance(error, CommandNotFound):
         return
     raise error
+
 
 client.run(TOKEN)
