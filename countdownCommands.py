@@ -63,6 +63,7 @@ async def on_ready():
     await client.change_presence(status=discord.Status.online, activity=discord.Game('countdown'))
     # start the task.loop
     update.start()
+    reset_channel.start()
 
 
 @client.event
