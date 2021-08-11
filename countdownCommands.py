@@ -60,6 +60,7 @@ def add_server(guildID):
 async def on_ready():
     # inform when bot code is running
     print('We have logged in as {0.user}'.format(client))
+    await client.change_presence(status=discord.Status.online, activity=discord.Game('countdown'))
     # start the task.loop
     update.start()
 
