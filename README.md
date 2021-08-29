@@ -8,7 +8,7 @@
 ## About
 Have you ever wanted a timer that counts down to special day on your discord server? If so, get your pal **Countdown Buddy** to help!
 
-Countdown Buddy is a discord bot that allows you to create your own **customizable countdown timer**! Once you create your timer, it will update every few seconds until it reaches the end time.
+Countdown Buddy is a discord bot that allows you to create your own **customizable countdown timer**! Once you create your timer, it will update every few seconds and alert you when it reaches the preset end time.
 
 For more info about the bot and its commands, do `$help`
 
