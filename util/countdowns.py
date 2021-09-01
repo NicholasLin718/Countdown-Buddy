@@ -78,7 +78,7 @@ async def update_countdown(guild, messageID):
                                         'Field Value': tempDict['Field Value'], 'Field Name 2': "Message ID",
                                         'Field Value 2': str(message.id), 'Image': tempDict['Image'],
                                         'Thumbnail': tempDict['Thumbnail'], 'Message': tempDict['Message'],
-                                        'Mention': tempDict['Mention'], 'Author Name': tempDict['Title'],
+                                        'Mention': tempDict['Mention'], 'Author Name': tempDict['Author Name'],
                                         'Author Icon': tempDict['Author Icon'], 'Channel': tempDict['Channel']}}
             data[str(guild.id)].update(append)
             del data[str(guild.id)]["temp"]
