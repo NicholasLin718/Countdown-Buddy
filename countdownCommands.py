@@ -42,7 +42,6 @@ def set_embed_values():
     global countdown_announcement_channel
     countdown_announcement_channel = 'countdown-announcements'
 
-
 def add_server(guildID):
     # open orig file as dict
     path = 'util/countdown-data.json'
@@ -97,8 +96,9 @@ async def reset_channel():
 
 
 @client.command()
-async def countdown(ctx):
+async def countdown(ctx, arg):
     # checks to see if time is empty
+    print(arg)
     if countdown_time == '':
         await ctx.send("Please enter a time!")
     # if not empty
@@ -110,7 +110,7 @@ async def countdown(ctx):
                 await ctx.send("Please check your time, you may be entering a time that has already passed!")
             else:
                 # add countdown to json file so task.loop can update it
-                updateFiles.write_file(ctx.guild.id)
+                updateFiles.write_file(ctx.guild.id, str(arg))
         except ValueError as e:  # catch any other errors
             print(e)
             await ctx.send("Please check your values, something went wrong!")
@@ -121,10 +121,10 @@ async def countdown(ctx):
 async def new(ctx):
     # resets all the values
     set_embed_values()
-    await ctx.send("Create new countdown!")
+    await ctx.send("Created new countdown! Deleting any unfinished countdowns.")
     updateFiles.write_temp(countdown_title, countdown_description, countdown_time, countdown_image,
                            countdown_thumbnail, countdown_msg, countdown_mention,
-                           countdown_author_name, countdown_author_icon, countdown_announcement_channel)
+                           countdown_author_name, countdown_author_icon, countdown_announcement_channel, str(ctx.guild.id))
 
 
 @client.command()
@@ -164,6 +164,7 @@ async def on_message(command):
     message_set = False
     message_edit = False
     guildid = command.guild.id
+    
     countdown_id = ''
     # if message is an edit
     if cmd.startswith("edit"):
@@ -276,7 +277,7 @@ async def on_message(command):
     if message_set:
         updateFiles.write_temp(countdown_title, countdown_description, countdown_time, countdown_image,
                                countdown_thumbnail, countdown_msg, countdown_mention,
-                               countdown_author_name, countdown_author_icon, countdown_announcement_channel)
+                               countdown_author_name, countdown_author_icon, countdown_announcement_channel, guildid)
         new_embed = countdownEmbeds.details_embed()
         await command.channel.send(embed=new_embed)
     # run if its a message edit

@@ -1,10 +1,10 @@
 import json
 
-
 def write_file(guildID):
     temp_path = 'temp-data.json'
     with open(temp_path, 'r') as f:
-        temp_file_data = json.load(f)
+        temp_file = json.load(f)
+        temp_file_data = temp_file[str(guildID)]
 
     path = 'countdown-data.json'
     with open(path, 'r') as f:
@@ -24,26 +24,23 @@ def write_file(guildID):
     with open(path, 'w') as f:
         json.dump(data, f, indent=4)
 
-    append = {'Title': '', 'Description': '', 'Field Name': 'Time Remaining: ',
-              'Field Value': '', 'Field Name 2': 'Message ID: ', 'Field Value 2': '0',
-              'Image': '', 'Thumbnail': '',
-              'Message': '', 'Mention': '', 'Author Name': '',
-              'Author Icon': '', 'Channel': 'countdown-announcements'}
+    append = {}
     temp_file_data.update(append)
     with open(temp_path, 'w') as f:
         json.dump(temp_file_data, f, indent=4)
 
 
-def write_temp(countdown_title, countdown_description, countdown_time, countdown_image, countdown_thumbnail, countdown_msg, countdown_mention, countdown_author_name, countdown_author_icon, countdown_announcement_channel):
+def write_temp(countdown_title, countdown_description, countdown_time, countdown_image, countdown_thumbnail, countdown_msg, countdown_mention, countdown_author_name, countdown_author_icon, countdown_announcement_channel, guildID):
     path = 'temp-data.json'
+    
     with open(path, 'r') as f:
         data = json.load(f)
     # append values to the temp-data file, where all the values the user is entering before the countdown starts is stored
-    append = {'Title': countdown_title, 'Description': countdown_description, 'Field Name': 'Time Remaining: ',
+    append = {guildID: {'Title': countdown_title, 'Description': countdown_description, 'Field Name': 'Time Remaining: ',
               'Field Value': countdown_time, 'Field Name 2': 'Message ID: ', 'Field Value 2': '0',
               'Image': countdown_image, 'Thumbnail': countdown_thumbnail,
               'Message': countdown_msg, 'Mention': countdown_mention, 'Author Name': countdown_author_name,
-              'Author Icon': countdown_author_icon, 'Channel': countdown_announcement_channel}
+              'Author Icon': countdown_author_icon, 'Channel': countdown_announcement_channel}}
     data.update(append)
     # write updated dict to file
     with open(path, 'w') as f:

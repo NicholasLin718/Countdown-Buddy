@@ -2,6 +2,15 @@ import json
 import discord
 from util import countdownEmbeds
 from datetime import datetime
+from pymongo import MongoClient
+
+f = open("password.txt", "r")
+PASSWORD = f.read()
+
+cluster = MongoClient("mongodb+srv://nicholas_lin:" + PASSWORD + "@cluster0.dsz7w.mongodb.net/myFirstDatabase?retryWrites=true&w=majority")
+
+# cluster = MongoClient("mongodb+srv://nicholas_lin:bGrTx56XdNd92qc@cluster0.dsz7w.mongodb.net/myFirstDatabase?retryWrites=true&w=majority"
+
 
 # compare the time the user entered and the current time to see if countdown is possible
 def check_time_validity(endtime):
@@ -23,6 +32,8 @@ def check_time_validity(endtime):
 
 # method to update countdown
 async def update_countdown(guild, messageID):
+    db = cluster["countdown-buddy"]
+    collection = db["countdown-data"]
     try:
         # see if a countdown channel exists
         if discord.utils.get(guild.channels, name='countdown') is None:
@@ -31,32 +42,36 @@ async def update_countdown(guild, messageID):
         else:
             cd_channel = discord.utils.get(guild.channels, name='countdown')
 
-        path = 'countdown-data.json'
-        with open(path, 'r') as f:
-            data = json.load(f)
+        # path = 'countdown-data.json'
+        # with open(path, 'r') as f:
+        #     data = json.load(f)
         # get the end time of that countdown
-        time = data[str(guild.id)][str(messageID)][str("Field Value")]
+        
+        data = collection.find_one({"_id": messageID})
+        time = data[str("Field Value")]
+        
         new_time = await countdownEmbeds.new_msg(cd_channel, time)
         # if the endtime has already passed and new_time stored a return value of "Timer has ended."
         if new_time == "Timer has ended.":
-            channel_name = data[str(guild.id)][str(messageID)]['Channel']
+            channel_name = data['Channel']
             if discord.utils.get(guild.channels, name=channel_name) is None:
                 cd_announcements_channel = await guild.create_text_channel(channel_name)
                 await cd_announcements_channel.edit(position=0, sync_permissions=True)
             else:
                 cd_announcements_channel = discord.utils.get(guild.channels, name=channel_name)
 
-            send_countdown_message = data[str(guild.id)][str(messageID)]['Message']
-            send_countdown_ping = data[str(guild.id)][str(messageID)]['Mention']
+            send_countdown_message = data['Message']
+            send_countdown_ping = data['Mention']
             # edit the message to say the timer has ended
             end_embed = countdownEmbeds.set_embed("Timer has ended!", messageID, guild.id)
             cd_message = await cd_channel.fetch_message(messageID)
             await cd_message.edit(embed=end_embed)
 
-            del data[str(guild.id)][str(messageID)]
+            collection.delete_one({"id_": messageID})
+            # del data[str(guild.id)][str(messageID)]
 
-            with open(path, 'w') as f:
-                json.dump(data, f, indent=4)
+            # with open(path, 'w') as f:
+            #     json.dump(data, f, indent=4)
             # ping the mention the user chose, or no ping at all
             if send_countdown_ping == 'here':
                 await cd_announcements_channel.send("@here")
@@ -70,20 +85,27 @@ async def update_countdown(guild, messageID):
             await cd_announcements_channel.send(send_countdown_message)
         # replace the new countdown using messageID as the new key
         elif messageID == "temp":
+            
+            path = 'countdown-data.json'
+            with open(path, 'r') as f:
+                countdown_data = json.load(f)
+        
             new_message = countdownEmbeds.set_temp_embed(new_time)
             message = await cd_channel.send(embed=new_message)
-            tempDict = data[str(guild.id)]["temp"]
-            append = {str(message.id): {'Title': tempDict['Title'], 'Description': tempDict['Description'],
+            tempDict = countdown_data[str(guild.id)]["temp"]
+            
+            post = {"_id": message.id, 'Title': tempDict['Title'], 'Description': tempDict['Description'],
                                         'Field Name': "Time Remaining: ",
                                         'Field Value': tempDict['Field Value'], 'Field Name 2': "Message ID",
                                         'Field Value 2': str(message.id), 'Image': tempDict['Image'],
                                         'Thumbnail': tempDict['Thumbnail'], 'Message': tempDict['Message'],
                                         'Mention': tempDict['Mention'], 'Author Name': tempDict['Author Name'],
-                                        'Author Icon': tempDict['Author Icon'], 'Channel': tempDict['Channel']}}
-            data[str(guild.id)].update(append)
-            del data[str(guild.id)]["temp"]
+                                        'Author Icon': tempDict['Author Icon'], 'Channel': tempDict['Channel']}
+            collection.insert_one(post)
+            
+            del countdown_data[str(guild.id)]["temp"]
             with open(path, 'w') as f:
-                json.dump(data, f, indent=4)
+                json.dump(countdown_data, f, indent=4)
         # any other situation - edits the message with a new time
         else:
             try:
@@ -100,6 +122,8 @@ async def update_countdown(guild, messageID):
 
                 new_message = countdownEmbeds.set_embed(new_time, messageID, guild.id)
                 message = await cd_channel.send(embed=new_message)
+                
+                collection.update_one({"_id": messageID}, {"$set":{"_id": message.id}})
                 data[str(guild.id)][str(message.id)] = data[str(guild.id)][str(messageID)]
                 data[str(guild.id)][str(message.id)]['Field Value 2'] = str(message.id)
                 del data[str(guild.id)][str(messageID)]
