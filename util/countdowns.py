@@ -9,9 +9,6 @@ PASSWORD = f.read()
 
 cluster = MongoClient("mongodb+srv://nicholas_lin:" + PASSWORD + "@cluster0.dsz7w.mongodb.net/myFirstDatabase?retryWrites=true&w=majority")
 
-# cluster = MongoClient("mongodb+srv://nicholas_lin:bGrTx56XdNd92qc@cluster0.dsz7w.mongodb.net/myFirstDatabase?retryWrites=true&w=majority"
-
-
 # compare the time the user entered and the current time to see if countdown is possible
 def check_time_validity(endtime):
     y = int(endtime[0:4])
