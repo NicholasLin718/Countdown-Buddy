@@ -1,6 +1,13 @@
 import json
 from datetime import timedelta, datetime
 import discord 
+from pymongo import MongoClient
+
+f = open("password.txt", "r")
+PASSWORD = f.read()
+
+cluster = MongoClient("mongodb+srv://nicholas_lin:" + PASSWORD + "@cluster0.dsz7w.mongodb.net/myFirstDatabase?retryWrites=true&w=majority")
+
 
 async def new_msg(ctx, endtime):
     y = int(endtime[0:4])
@@ -63,16 +70,18 @@ async def new_msg(ctx, endtime):
     return message
 
 
-def set_temp_embed(message):
+def set_temp_embed(message, guildID):
     # The initial countdown message that is sent
-    path = 'temp-data.json'
+    
+    path = 'countdown-data.json'
     with open(path, 'r') as f:
-        data = json.load(f)
+        d = json.load(f)
 
+    data = d[str(guildID)]
     new_embed = discord.Embed(
         title=data["Title"],
         description=data["Description"],
-        colour=discord.Colour.random()
+        colour=discord.Color.orange()
     )
     new_embed.set_footer(text='Contact Nicholas_Lin#7193 with concerns.')
     new_embed.set_image(
@@ -91,38 +100,43 @@ def set_temp_embed(message):
 
 def set_embed(message, messageID, guildID):
     # Sets the defaulted embed after messageID exists
-    path = 'countdown-data.json'
+    # path = 'countdown-data.json'
 
-    with open(path, 'r') as f:
-        data = json.load(f)
+    # with open(path, 'r') as f:
+    #     data = json.load(f)
+    db = cluster["countdown-buddy"]
+    collection = db["countdown-data"]
+    if collection.find_one({"_id": messageID}) != None:
+        data = collection.find_one({"_id": messageID})
+        new_embed = discord.Embed(
+            title=data["Title"],
+            description=data["Description"],
+            colour=discord.Colour.orange()
+        )
+        new_embed.set_footer(text='Contact Nicholas_Lin#7193 with concerns.')
+        new_embed.set_image(
+            url=data["Image"])
+        new_embed.set_thumbnail(
+            url=data["Thumbnail"])
+        new_embed.add_field(name="Time Remaining: ", value=message,
+                            inline=False)
+        new_embed.add_field(name=data['Field Name 2'],
+                            value=data['Field Value 2'],
+                            inline=False)
+        pfp = "https://cdn.discordapp.com/avatars/" + data["Author Icon"]
+        new_embed.set_author(name=data["Author Name"],
+                            icon_url=pfp)
+        return new_embed
+    else:
+        return None
 
-    new_embed = discord.Embed(
-        title=data[str(guildID)][str(messageID)]["Title"],
-        description=data[str(guildID)][str(messageID)]["Description"],
-        colour=discord.Colour.random()
-    )
-    new_embed.set_footer(text='Contact Nicholas_Lin#7193 with concerns.')
-    new_embed.set_image(
-        url=data[str(guildID)][str(messageID)]["Image"])
-    new_embed.set_thumbnail(
-        url=data[str(guildID)][str(messageID)]["Thumbnail"])
-    new_embed.add_field(name="Time Remaining: ", value=message,
-                        inline=False)
-    new_embed.add_field(name=data[str(guildID)][str(messageID)]['Field Name 2'],
-                        value=data[str(guildID)][str(messageID)]['Field Value 2'],
-                        inline=False)
-    pfp = "https://cdn.discordapp.com/avatars/" + data[str(guildID)][str(messageID)]["Author Icon"]
-    new_embed.set_author(name=data[str(guildID)][str(messageID)]["Author Name"],
-                         icon_url=pfp)
-    return new_embed
 
-
-def details_embed():
+def details_embed(guildID):
     # Tells users what they have entered so far
-    path = 'temp-data.json'
+    path = 'countdown-data.json'
     with open(path, 'r') as f:
-        data = json.load(f)
-
+        d = json.load(f)
+    data = d[str(guildID)]
     if data['Title'] == '':
         title_bool = '❌ Title'
     else:
@@ -170,10 +184,15 @@ def details_embed():
 
 def edit_details_embed(guildID, messageID):
     # Nearly same as details_embed except it displays edited instead
-    path = 'countdown-data.json'
-    with open(path, 'r') as f:
-        data = json.load(f)
-    data_values = data[str(guildID)][str(messageID)]
+    # path = 'countdown-data.json'
+    # with open(path, 'r') as f:
+    #     data = json.load(f)
+    # data_values = data[str(guildID)][str(messageID)]
+    
+    db = cluster["countdown-buddy"]
+    collection = db["countdown-data"]
+    data_values = collection.find_one({"_id": messageID})
+    
     if data_values['Title'] == '':
         title_bool = '❌ Title'
     else:
